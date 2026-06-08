@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>NEXO Checklist</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --navy:#1a2744;--gold:#B8933A;--gold-light:#f5e9c8;--gold-mid:#d4a84b;
+  --white:#fff;--beige:#fdf6e9;--off:#f9f7f3;
+  --text:#111827;--muted:#6b7280;--border:#e5e0d5;
+  --ok:#166534;--ok-bg:#f0fdf4;--ok-border:#bbf7d0;
+  --fail:#991b1b;--fail-bg:#fff1f2;--fail-border:#fecaca;
+  --obs:#92400e;--obs-bg:#fffbeb;--obs-border:#fde68a;
+  --r:16px;--rsm:10px;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#fff;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1;}
+.screen.active{transform:translateX(0);}
+.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.footer{padding:12px 18px 28px;flex-shrink:0;background:#fff;border-top:1px solid var(--border);box-sizing:border-box;width:100%;}
+.hidden{display:none!important;}
+
+/* HEADER WHITE */
+.wh{background:#fff;border-bottom:1.5px solid var(--border);padding:12px 16px 10px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.wh img{height:28px;flex-shrink:0;}
+.wh-title{font-size:17px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.02em;}
+.wh-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+.pill{background:var(--gold);color:#fff;font-size:13px;font-weight:800;padding:5px 14px;border-radius:24px;white-space:nowrap;}
+
+/* PROGRESS */
+.prog{height:4px;background:#f3ede0;flex-shrink:0;}
+.prog-fill{height:100%;background:var(--gold);transition:width .3s;}
+
+/* S0 */
+.s0-top{text-align:center;padding:28px 20px 20px;}
+.s0-title{font-size:30px;font-weight:800;color:var(--navy);letter-spacing:.02em;}
+.s0-title span{color:var(--gold);}
+.s0-sub{font-size:14px;color:var(--muted);margin-top:6px;}
+.s0-line{width:44px;height:3px;background:var(--gold);border-radius:2px;margin:10px auto 0;}
+.s0-pad{padding:0 16px 16px;}
+
+/* SUPERVISOR CARD */
+.sv-card{background:var(--beige);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;border-left:4px solid var(--gold);margin-bottom:14px;}
+.sv-avatar{width:52px;height:52px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sv-lbl{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.sv-select{width:100%;border:1.5px solid var(--border);border-radius:var(--rsm);padding:10px 12px;font-size:15px;font-family:inherit;color:var(--navy);font-weight:600;background:#fff;outline:none;appearance:none;}
+.sv-nexo{font-size:12px;color:var(--muted);margin-top:6px;border-top:1px solid rgba(184,147,58,.3);padding-top:6px;}
+
+/* FORM CARD */
+.fc{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;margin-bottom:14px;}
+.fc-row{display:flex;align-items:center;gap:12px;padding:13px 16px;}
+.fc-icon{width:38px;height:38px;border-radius:10px;background:#f0ede6;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.fc-wrap{flex:1;min-width:0;}
+.fc-lbl{font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px;}
+.fc-input{width:100%;border:1.5px solid var(--border);border-radius:var(--rsm);padding:10px 12px;font-size:16px;font-family:inherit;color:var(--text);background:var(--beige);outline:none;}
+.fc-input:focus{border-color:var(--gold);}
+.fc-div{height:1px;background:var(--border);margin:0 16px;}
+
+/* BUTTONS */
+.btn{width:100%;padding:18px;border-radius:var(--r);font-size:17px;font-weight:800;cursor:pointer;border:none;font-family:inherit;transition:all .15s;letter-spacing:.03em;}
+.btn:active{transform:scale(.97);}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-back{background:var(--off);color:var(--muted);border:1.5px solid var(--border);flex:0 0 auto;padding:18px 20px;font-size:16px;}
+.btn-pdf{background:#b91c1c;color:#fff;}
+.btn-csv{background:var(--navy);color:#fff;}
+.btn-ghost{background:var(--off);color:var(--muted);border:1.5px solid var(--border);}
+.nav-row{display:flex;gap:10px;box-sizing:border-box;}
+
+/* ITEM SCREEN */
+.item-pad{padding:18px 18px 0;}
+.item-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.item-badge{background:var(--gold);color:#fff;font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;letter-spacing:.04em;}
+.item-cat{font-size:12px;font-weight:700;color:var(--gold);border:1.5px solid var(--gold-light);background:var(--gold-light);padding:3px 12px;border-radius:20px;}
+.item-desc{font-size:24px;font-weight:800;color:var(--navy);line-height:1.25;margin-bottom:16px;}
+
+/* GUIA */
+.guia{background:var(--off);border-left:4px solid var(--gold);border-radius:0 var(--rsm) var(--rsm) 0;padding:13px 15px;margin-bottom:20px;}
+.guia-lbl{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px;}
+.guia-item{font-size:15px;color:var(--text);padding:5px 0 5px 18px;position:relative;border-bottom:1px solid var(--border);}
+.guia-item:last-child{border-bottom:none;}
+.guia-item::before{content:">";position:absolute;left:2px;color:var(--gold);font-weight:700;}
+
+/* STATE BTNS */
+.state-btns{display:flex;flex-direction:column;gap:11px;padding:0 18px 4px;}
+.sbtn{width:100%;padding:18px 20px;border-radius:var(--r);font-size:18px;font-weight:800;border:2px solid var(--border);display:flex;align-items:center;gap:14px;cursor:pointer;background:#fff;color:var(--muted);font-family:inherit;transition:all .2s;text-align:left;}
+.sbtn:active{transform:scale(.97);}
+.sbtn-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;background:var(--border);color:var(--muted);transition:all .2s;}
+.sbtn-main{font-size:18px;font-weight:800;line-height:1;}
+.sbtn-sub{font-size:13px;font-weight:500;opacity:.6;margin-top:2px;font-weight:400;}
+.sbtn.ok{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok);}
+.sbtn.ok .sbtn-icon{background:var(--ok);color:#fff;}
+.sbtn.fail{border-color:var(--fail-border);background:var(--fail-bg);color:var(--fail);}
+.sbtn.fail .sbtn-icon{background:var(--fail);color:#fff;}
+.sbtn.obs{border-color:var(--obs-border);background:var(--obs-bg);color:var(--obs);}
+.sbtn.obs .sbtn-icon{background:var(--obs);color:#fff;}
+
+/* OBS PANEL */
+.obs-panel{margin:10px 18px 0;background:var(--off);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;display:none;}
+.obs-panel.show{display:block;}
+.obs-lbl{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;}
+.obs-panel textarea{width:100%;border:0;border-bottom:2px solid var(--border);padding:6px 0;font-size:16px;min-height:72px;resize:none;font-family:inherit;color:var(--text);background:transparent;outline:none;}
+.obs-panel textarea:focus{border-color:var(--gold);}
+.foto-btn{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--rsm);border:1.5px solid var(--gold);background:var(--gold-light);font-size:13px;font-weight:700;color:var(--gold);cursor:pointer;margin-top:10px;font-family:inherit;}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);}
+
+/* RESUMEN */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat{border-radius:var(--r);padding:16px 10px;text-align:center;border:2px solid transparent;}
+.stat-n{font-size:40px;font-weight:800;line-height:1;}
+.stat-l{font-size:10px;font-weight:700;margin-top:5px;text-transform:uppercase;letter-spacing:.05em;}
+.stat.ok{background:var(--ok-bg);border-color:var(--ok-border);}
+.stat.ok .stat-n,.stat.ok .stat-l{color:var(--ok);}
+.stat.fail{background:var(--fail-bg);border-color:var(--fail-border);}
+.stat.fail .stat-n,.stat.fail .stat-l{color:var(--fail);}
+.stat.obs{background:var(--obs-bg);border-color:var(--obs-border);}
+.stat.obs .stat-n,.stat.obs .stat-l{color:var(--obs);}
+.stat.pend{background:var(--off);border-color:var(--border);}
+.stat.pend .stat-n,.stat.pend .stat-l{color:var(--muted);}
+
+.sec-lbl{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sec-lbl::after{content:"";flex:1;height:1.5px;background:var(--gold-light);}
+.hallazgo{background:var(--off);border-radius:var(--rsm);padding:13px 15px;margin-bottom:9px;border-left:4px solid var(--border);}
+.hallazgo.fail{border-left-color:var(--fail);}
+.hallazgo.obs{border-left-color:var(--obs);}
+.h-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.04em;}
+.badge.fail{background:var(--fail-bg);color:var(--fail);border:1.5px solid var(--fail-border);}
+.badge.obs{background:var(--obs-bg);color:var(--obs);border:1.5px solid var(--obs-border);}
+.h-num{font-size:11px;color:var(--muted);}
+.h-desc{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px;line-height:1.3;}
+.h-obs{font-size:13px;color:var(--muted);line-height:1.4;}
+.h-fotos{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;}
+.h-thumb{width:50px;height:50px;border-radius:7px;object-fit:cover;border:1.5px solid var(--border);}
+.obs-gen{border:2px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden;background:var(--beige);}
+.obs-gen textarea{width:100%;padding:13px 15px;font-size:15px;border:none;outline:none;min-height:76px;resize:none;font-family:inherit;color:var(--text);background:transparent;}
+.hora-sal{background:var(--off);border-radius:var(--rsm);padding:13px 15px;margin-bottom:14px;border:2px solid var(--border);}
+.hora-sal-lbl{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.hora-sal input{width:100%;border:0;border-bottom:2px solid var(--border);padding:6px 0;font-size:20px;color:var(--navy);background:transparent;outline:none;font-family:inherit;}
+.r-pad{padding:18px 18px 0;}
+input[type=file]{display:none;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+<!-- S0 DATOS -->
+<div class="screen active" id="s0">
+  <div class="body">
+    <div class="s0-top">
+      <img id="L0" src="" alt="NEXO" style="height:52px;display:inline-block;margin-bottom:16px;"/>
+      <div class="s0-title">CHECKLIST <span>OPERATIVO</span></div>
+      <div class="s0-sub">Supervision NEXO</div>
+      <div class="s0-line"></div>
+    </div>
+    <div class="s0-pad">
+      <div class="sv-card">
+        <div class="sv-avatar">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="sv-lbl">Jefe de Operaciones</div>
+          <select id="f-jefe" class="sv-select">
+            <option value="">Seleccionar...</option>
+            <option selected>Claudia Panta Taboada</option>
+            <option>Maholy Garrido</option>
+            <option>Junior Villavicencio</option>
+            <option>Leonardo Aponte</option>
+            <option>Jose Vizcardo</option>
+            <option>Monica Degregori</option>
+          </select>
+          <div class="sv-nexo">NEXO Gestion Inmobiliaria</div>
+        </div>
+      </div>
+      <div class="fc">
+        <div class="fc-row">
+          <div class="fc-icon">&#127968;</div>
+          <div class="fc-wrap">
+            <div class="fc-lbl">Edificio</div>
+            <input type="text" id="f-edif" class="fc-input" placeholder="Nombre del edificio"/>
+          </div>
+        </div>
+        <div class="fc-div"></div>
+        <div class="fc-row">
+          <div class="fc-icon">&#128100;</div>
+          <div class="fc-wrap">
+            <div class="fc-lbl">Administrador</div>
+            <input type="text" id="f-admin" class="fc-input" placeholder="Nombre completo"/>
+          </div>
+        </div>
+        <div class="fc-div"></div>
+        <div class="fc-row" style="gap:8px;">
+          <div class="fc-icon">&#128197;</div>
+          <div class="fc-wrap">
+            <div class="fc-lbl">Fecha</div>
+            <input type="date" id="f-fecha" class="fc-input"/>
+          </div>
+          <div class="fc-icon">&#128336;</div>
+          <div class="fc-wrap">
+            <div class="fc-lbl">Hora ingreso</div>
+            <input type="time" id="f-hin" class="fc-input"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-navy" onclick="startItems()">INICIAR INSPECCION &rarr;</button>
+  </div>
+</div>
+
+<!-- S1 ITEM -->
+<div class="screen" id="s1">
+  <div class="wh">
+    <img id="L1" src="" alt="NEXO"/>
+    <div style="flex:1;">
+      <div class="wh-title" id="i-edif">-</div>
+    </div>
+    <div class="pill" id="i-counter">1/35</div>
+  </div>
+  <div class="prog"><div class="prog-fill" id="i-prog" style="width:0%"></div></div>
+  <div class="body" id="i-body">
+    <div class="item-pad">
+      <div class="item-eyebrow">
+        <div class="item-badge" id="i-num">ITEM 1</div>
+        <div class="item-cat" id="i-cat">INFRAESTRUCTURA</div>
+      </div>
+      <div class="item-desc" id="i-desc"></div>
+      <div class="guia">
+        <div class="guia-lbl">Que revisar?</div>
+        <div id="i-guia"></div>
+      </div>
+    </div>
+    <div class="state-btns">
+      <button class="sbtn" id="btn-ok" onclick="setSt('ok')">
+        <div class="sbtn-icon" id="ico-ok">&#10003;</div>
+        <div><div class="sbtn-main">CONFORME</div><div class="sbtn-sub">Todo en orden</div></div>
+      </button>
+      <button class="sbtn" id="btn-fail" onclick="setSt('fail')">
+        <div class="sbtn-icon" id="ico-fail">&#10007;</div>
+        <div><div class="sbtn-main">NO CUMPLE</div><div class="sbtn-sub">Requiere accion inmediata</div></div>
+      </button>
+      <button class="sbtn" id="btn-obs" onclick="setSt('obs')">
+        <div class="sbtn-icon" id="ico-obs">!</div>
+        <div><div class="sbtn-main">OBSERVACION</div><div class="sbtn-sub">Punto a mejorar</div></div>
+      </button>
+    </div>
+    <div class="obs-panel" id="obs-panel">
+      <div class="obs-lbl">Detalle del hallazgo</div>
+      <textarea id="obs-text" placeholder="Describe lo que encontraste..." oninput="saveObs()"></textarea>
+      <button class="foto-btn" onclick="document.getElementById('fotoInput').click()">&#128247; AGREGAR FOTO</button>
+      <div class="thumbs" id="thumbs"></div>
+      <input type="file" id="fotoInput" accept="image/*" multiple onchange="addFotos(this)"/>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+  <div style="padding:12px 18px 28px;flex-shrink:0;background:#fff;border-top:1px solid #e5e0d5;position:relative;left:0;right:0;width:100%;box-sizing:border-box;">
+    <div style="display:flex;gap:10px;width:100%;box-sizing:border-box;">
+      <button style="flex:0 0 auto;padding:18px 20px;border-radius:16px;font-size:16px;font-weight:800;cursor:pointer;border:1.5px solid #e5e0d5;background:#f9f7f3;color:#6b7280;font-family:inherit;" onclick="goBack()">&larr;</button>
+      <button style="flex:1;padding:18px;border-radius:16px;font-size:17px;font-weight:800;cursor:pointer;border:none;background:#1a2744;color:#fff;font-family:inherit;min-width:0;" id="btn-next" onclick="nextItem()">SIGUIENTE &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- S2 RESUMEN -->
+<div class="screen" id="s2">
+  <div class="wh">
+    <img id="L2" src="" alt="NEXO"/>
+    <div style="flex:1;">
+      <div class="wh-title">RESUMEN DE VISITA</div>
+      <div class="wh-sub" id="r-edif">-</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="r-pad">
+      <div class="stats" id="r-stats"></div>
+      <div class="sec-lbl">Hallazgos</div>
+      <div id="r-hallazgos"></div>
+      <div class="sec-lbl" style="margin-top:18px;">Cierre de visita</div>
+      <div class="hora-sal">
+        <div class="hora-sal-lbl">Hora de salida</div>
+        <input type="time" id="f-hout"/>
+      </div>
+      
+        
+      </div>
+      <div class="sec-lbl">Observaciones generales</div>
+      <div class="obs-gen"><textarea id="r-obsgen" placeholder="Notas adicionales..."></textarea></div>
+      <div class="hora-sal" style="margin-top:10px;">
+        <div class="hora-sal-lbl">Correo del administrador</div>
+        <input type="email" id="f-email-admin" placeholder="admin@ejemplo.com" style="width:100%;border:0;border-bottom:2px solid #e5e0d5;padding:8px 0;font-size:16px;color:#1a2744;background:transparent;outline:none;font-family:inherit;"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:14px;margin-top:14px;">
+        <button class="btn" id="btn-enviar" onclick="enviarActa()" style="background:#B8933A;color:#fff;border:none;font-size:17px;padding:18px;border-radius:16px;font-weight:800;font-family:inherit;cursor:pointer;">&#9993; FINALIZAR Y ENVIAR</button>
+        <button class="btn btn-pdf" onclick="generarPDF()">&#128196; VER ACTA PDF</button>
+        <button class="btn btn-ghost" onclick="nuevaVisita()">&larr; Nueva visita</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var LOGO = "data:image/jpeg;base64,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";
+
+var G={
+1:["Revisar pintura, grietas o humedad en fachada","Verificar estado de rejas, cercos y jardines exteriores","Comprobar senaletica visible y en buen estado"],
+2:["Probar apertura y cierre de puertas principales","Verificar porton vehicular: motor, sensor y mando","Comprobar intercomunicadores y videoportero"],
+3:["Revisar pisos de ingreso, pasillos y escaleras","Verificar limpieza en cabinas de ascensor","Comprobar estado de barandas y pasamanos"],
+4:["Verificar cesped cortado y plantas podadas","Comprobar sistema de riego operativo","Revisar maceteros y jardines sin maleza"],
+5:["Verificar encendido de luminarias en pasillos","Comprobar focos quemados o danados","Revisar temporizadores o sensores de movimiento"],
+6:["Presionar boton de prueba de cada luz de emergencia","Verificar que enciendan al cortar energia","Revisar fecha de ultimo mantenimiento"],
+7:["Verificar etiqueta de recarga vigente en cada extintor","Comprobar que el seguro y precinto esten intactos","Revisar que esten en su ubicacion y accesibles"],
+8:["Verificar que puertas de tableros esten cerradas","Comprobar que no haya cables sueltos o quemados","Revisar identificacion de circuitos en cada tablero"],
+9:["Encender bombas y verificar que arranquen sin ruido","Comprobar presion de agua en puntos de red","Revisar si hay fugas o vibraciones anomalas"],
+10:["Verificar nivel de agua en cisterna de consumo","Comprobar que cisterna BCI este al 100%","Revisar valvulas de llenado operativas"],
+11:["Verificar tablero BCI encendido sin alarmas activas","Comprobar mangueras enrolladas y en buen estado","Revisar acceso libre a gabinetes BCI"],
+12:["Verificar panel ACI sin alertas ni fallas","Comprobar detectores de humo visibles y sin obstruccion","Revisar rociadores sin dano fisico"],
+13:["Revisar sillas, mesas y muebles de areas comunes","Comprobar que no haya piezas rotas o sueltas","Verificar limpieza y presentacion del mobiliario"],
+14:["Verificar que el cuarto de residuos este cerrado y limpio","Comprobar contenedores etiquetados por tipo de residuo","Revisar que no haya bolsas fuera de los contenedores"],
+15:["Realizar recorrido en cada cabina de ascensor","Verificar puertas de cierre suave y sin ruido","Comprobar iluminacion, botones y certificado vigente"],
+16:["Verificar fecha del ultimo servicio de fumigacion","Comprobar registros firmados por empresa especializada","Revisar areas de mayor riesgo: sotano, cuarto de basura"],
+17:["Confirmar presencia fisica del administrador","Verificar que este uniformado o identificado","Comprobar que este en su puesto en horario de visita"],
+18:["Preguntar por las 3 incidencias mas recientes","Verificar que conozca estado y responsable de cada una","Comprobar que tenga registro fisico o digital actualizado"],
+19:["Revisar cuadro de seguimiento en sistema o fisico","Verificar que tenga fecha de actualizacion reciente","Comprobar que incluya responsable y fecha limite por item"],
+20:["Solicitar reportes de rondas de los ultimos 3 dias","Verificar firma del vigilante y hora de ronda","Comprobar que cubran todas las areas del edificio"],
+21:["Preguntar por ultima comunicacion con la junta","Verificar existencia de actas o comunicados recientes","Comprobar que el administrador tenga contacto directo con el presidente"],
+22:["Revisar libro de reclamos o registro digital","Verificar que cada reclamo tenga respuesta y fecha","Comprobar tiempo promedio de atencion"],
+23:["Verificar que contratos, RUC y SOAT esten disponibles","Comprobar vigencia de documentos de proveedores","Revisar que la carpeta del edificio este ordenada y accesible"],
+24:["Solicitar planilla de personal activo del mes","Verificar asistencia de limpieza y vigilancia","Comprobar que haya reemplazos asignados para ausencias"],
+25:["Revisar cronograma en fisico o sistema","Verificar que los mantenimientos del mes esten programados","Comprobar cumplimiento de los mantenimientos anteriores"],
+26:["Solicitar ultimo presupuesto aprobado","Verificar que este actualizado al mes en curso","Comprobar que refleje gastos reales vs proyectados"],
+27:["Solicitar reporte de morosidad del mes","Verificar propietarios con deuda mayor a 2 meses","Comprobar que se hayan emitido cartas de cobranza"],
+28:["Verificar que el counter este limpio y ordenado","Comprobar que los documentos esten archivados","Revisar que haya materiales basicos disponibles"],
+29:["Verificar registro de reservas vigente","Comprobar que no haya cruces de horario","Revisar que las areas comunes esten disponibles segun reserva"],
+30:["Solicitar inventario actualizado de equipos","Verificar que cada equipo tenga codigo o etiqueta","Comprobar que el inventario coincida con lo fisico"],
+31:["Solicitar cuaderno de ocurrencias","Verificar que este al dia con firma del vigilante","Comprobar que registre incidentes, visitas y accesos"],
+32:["Revisar murales en ingreso y areas comunes","Verificar que la informacion este vigente y legible","Comprobar que incluya reglamento y contactos actualizados"],
+33:["Verificar lista de emergencias publicada en lugar visible","Comprobar que incluya serenazgo, bomberos y NEXO","Revisar que los numeros esten actualizados"],
+34:["Verificar grupo de WhatsApp o app activa","Comprobar que el administrador publique comunicados","Revisar ultimas publicaciones y respuesta a consultas"],
+35:["Verificar que las camaras esten encendidas y grabando","Comprobar cobertura en accesos, ascensores y areas comunes","Revisar que el DVR tenga espacio de almacenamiento"]
+};
+
+var ITEMS=[
+{n:1,cat:"I",d:"Fachada y areas externas en buen estado"},
+{n:2,cat:"I",d:"Accesos principales (puertas, porton vehicular) operativos"},
+{n:3,cat:"I",d:"Limpieza general del edificio (pisos, escaleras, ascensores)"},
+{n:4,cat:"I",d:"Areas verdes cuidadas y mantenidas"},
+{n:5,cat:"I",d:"Luminarias en zonas comunes"},
+{n:6,cat:"I",d:"Luces de emergencia en buen estado"},
+{n:7,cat:"I",d:"Extintores recargados"},
+{n:8,cat:"I",d:"Tableros electricos en buen estado"},
+{n:9,cat:"I",d:"Bombas de agua operativas"},
+{n:10,cat:"I",d:"Cisternas de consumo y BCI llenas"},
+{n:11,cat:"I",d:"BCI operativa"},
+{n:12,cat:"I",d:"Sistema ACI operativo"},
+{n:13,cat:"I",d:"Mobiliario en buen estado"},
+{n:14,cat:"I",d:"Estado del cuarto de residuos y limpieza de contenedores"},
+{n:15,cat:"I",d:"Ascensores en buen estado"},
+{n:16,cat:"I",d:"Fumigacion y desratizacion realizada"},
+{n:17,cat:"G",d:"Presencia del administrador en el edificio"},
+{n:18,cat:"G",d:"Administrador tiene conocimiento claro del estado de incidencias"},
+{n:19,cat:"G",d:"Cuadro de seguimiento actualizado"},
+{n:20,cat:"G",d:"Reportes de rondas y supervision diaria realizados"},
+{n:21,cat:"G",d:"Comunicacion adecuada con la Junta Directiva"},
+{n:22,cat:"G",d:"Gestion de reclamos y atencion a propietarios"},
+{n:23,cat:"G",d:"Documentacion del edificio al dia y disponible"},
+{n:24,cat:"G",d:"Control del personal de limpieza, vigilancia y otros"},
+{n:25,cat:"G",d:"Cronograma de mantenimiento preventivo actualizado"},
+{n:26,cat:"G",d:"Presupuesto actualizado"},
+{n:27,cat:"G",d:"Reporte de morosidad actualizado"},
+{n:28,cat:"G",d:"Counter de recepcion ordenado y limpio"},
+{n:29,cat:"G",d:"Registro de reservas de areas comunes"},
+{n:30,cat:"G",d:"Inventario de materiales y equipos del edificio"},
+{n:31,cat:"G",d:"Cuaderno de ocurrencias completo"},
+{n:32,cat:"G",d:"Murales fisicos con informacion clara y actualizada"},
+{n:33,cat:"G",d:"Publicacion visible de numeros de emergencia y contacto"},
+{n:34,cat:"G",d:"Canal de comunicacion digital activo"},
+{n:35,cat:"G",d:"Verificacion del sistema CCTV y camaras de seguridad"}
+];
+
+var state={};
+ITEMS.forEach(function(it){state[it.n]={status:null,obs:"",photos:[]};});
+var cur=0;
+
+// EmailJS config
+var EJS_SERVICE = "service_b1xah69";
+var EJS_TEMPLATE = "template_87vsaqp";
+var EJS_KEY = "lS1m0cvtsjHzoI9bS";
+
+function getJefeEmail(jefe){
+  var emails = {
+    "Claudia Panta Taboada": "operaciones@nexo-peru.net",
+    "Maholy Garrido": "operaciones@nexo-peru.net",
+    "Junior Villavicencio": "operaciones@nexo-peru.net",
+    "Leonardo Aponte": "operaciones@nexo-peru.net",
+    "Jose Vizcardo": "operaciones@nexo-peru.net",
+    "Monica Degregori": "operaciones@nexo-peru.net"
+  };
+  return emails[jefe] || "operaciones@nexo-peru.net";
+}
+
+function enviarActa(){
+  var edif = document.getElementById("f-edif").value||"Sin especificar";
+  var admin = document.getElementById("f-admin").value||"Administrador";
+  var jefe = document.getElementById("f-jefe").value||"";
+  var fecha = document.getElementById("f-fecha").value||"";
+  var hin = document.getElementById("f-hin").value||"";
+  var hout = document.getElementById("f-hout").value||"";
+  var emailAdmin = document.getElementById("f-email-admin").value||"";
+  var obsgen = document.getElementById("r-obsgen").value||"";
+
+  if(!emailAdmin){
+    alert("Por favor ingresa el correo del administrador.");
+    return;
+  }
+
+  // Show loading state
+  var btn = event.target;
+  btn.textContent = "Enviando...";
+  btn.disabled = true;
+
+  // Initialize EmailJS
+  emailjs.init(EJS_KEY);
+
+  var params = {
+    to_email: emailAdmin,
+    cc_email: getJefeEmail(jefe),
+    administrador: admin,
+    edificio: edif,
+    fecha: fecha,
+    jefe: jefe,
+    hora_ingreso: hin,
+    hora_salida: hout,
+    name: jefe,
+    email: getJefeEmail(jefe),
+    message: obsgen||"Sin observaciones adicionales."
+  };
+
+  emailjs.send(EJS_SERVICE, EJS_TEMPLATE, params).then(
+    function(){
+      btn.textContent = "&#9993; FINALIZAR Y ENVIAR";
+      btn.disabled = false;
+      // Show success screen
+      mostrarExito(edif, admin, emailAdmin);
+    },
+    function(err){
+      btn.textContent = "&#9993; FINALIZAR Y ENVIAR";
+      btn.disabled = false;
+      alert("Error al enviar: "+JSON.stringify(err)+". Verifica tu conexion e intenta de nuevo.");
+    }
+  );
+}
+
+function mostrarExito(edif, admin, email){
+  var s = document.getElementById("s2");
+  var body = s.querySelector(".body");
+  body.innerHTML = "";
+  var wrap = document.createElement("div");
+  wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;min-height:60vh;";
+  wrap.innerHTML =
+    "<div style='width:72px;height:72px;border-radius:50%;background:#f0fdf4;border:3px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px;'>&#10003;</div>"+
+    "<div style='font-size:22px;font-weight:800;color:#1a2744;margin-bottom:8px;'>Acta enviada</div>"+
+    "<div style='font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:6px;'>Se envio el acta de <strong>"+edif+"</strong></div>"+
+    "<div style='font-size:13px;color:#6b7280;margin-bottom:6px;'>Al administrador: <strong>"+admin+"</strong></div>"+
+    "<div style='font-size:12px;color:#9ca3af;margin-bottom:32px;'>"+email+"</div>"+
+    "<button onclick='nuevaVisita()' style='width:100%;max-width:300px;padding:16px;border-radius:14px;background:#1a2744;color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:inherit;'>+ Nueva visita</button>";
+  body.appendChild(wrap);
+}
+
+function nuevaVisita(){
+  // Reset all state
+  ITEMS.forEach(function(it){state[it.n]={status:null,obs:"",photos:[]};});
+  cur = 0;
+  document.getElementById("f-edif").value = "";
+  document.getElementById("f-admin").value = "";
+  document.getElementById("f-fecha").value = "";
+  document.getElementById("f-hin").value = "";
+  document.getElementById("f-hout").value = "";
+  document.getElementById("f-email-admin").value = "";
+  document.getElementById("r-obsgen").value = "";
+  goScreen("s0");
+  // Re-init date/time
+  var t = new Date();
+  var dd = t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+  document.getElementById("f-fecha").value = dd;
+  document.getElementById("f-hin").value = String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+}
+
+
+function init(){
+  var L=LOGO;
+  ["L0","L1","L2"].forEach(function(id){var el=document.getElementById(id);if(el){el.src=L;}});
+  var t=new Date();
+  var dd=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+  var hh=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+  document.getElementById("f-fecha").value=dd;
+  document.getElementById("f-hin").value=hh;
+}
+
+function goScreen(id){
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+  document.getElementById(id).classList.add("active");
+}
+
+function startItems(){
+  cur=0;
+  var edif=document.getElementById("f-edif").value||"Sin especificar";
+  document.getElementById("i-edif").textContent=edif.toUpperCase();
+  document.getElementById("r-edif").textContent=edif;
+  renderItem();
+  goScreen("s1");
+}
+
+function catLabel(c){return c==="I"?"INFRAESTRUCTURA":"GESTION";}
+function catFull(c){return c==="I"?"Infraestructura y areas comunes":"Gestion del administrador";}
+
+function renderItem(){
+  var it=ITEMS[cur];
+  var s=state[it.n];
+  document.getElementById("i-num").textContent="ITEM "+it.n;
+  document.getElementById("i-cat").textContent=catLabel(it.cat);
+  document.getElementById("i-desc").textContent=it.d;
+  document.getElementById("i-counter").textContent=it.n+"/35";
+  document.getElementById("i-prog").style.width=(it.n/35*100)+"%";
+  document.getElementById("btn-next").textContent=cur===ITEMS.length-1?"VER RESUMEN ->":"SIGUIENTE ->";
+  var g=document.getElementById("i-guia");
+  g.innerHTML="";
+  (G[it.n]||[]).forEach(function(txt){
+    var d=document.createElement("div");
+    d.className="guia-item";
+    d.textContent=txt;
+    g.appendChild(d);
+  });
+  ["ok","fail","obs"].forEach(function(st){
+    document.getElementById("btn-"+st).className="sbtn"+(s.status===st?" "+st:"");
+  });
+  var p=document.getElementById("obs-panel");
+  if(s.status==="fail"||s.status==="obs"){
+    p.classList.add("show");
+    document.getElementById("obs-text").value=s.obs;
+  } else {
+    p.classList.remove("show");
+  }
+  renderThumbs();
+  document.getElementById("i-body").scrollTop=0;
+}
+
+function setSt(st){
+  var n=ITEMS[cur].n;
+  state[n].status=(state[n].status===st)?null:st;
+  if(state[n].status!=="fail"&&state[n].status!=="obs"){state[n].obs="";state[n].photos=[];}
+  renderItem();
+}
+
+function saveObs(){state[ITEMS[cur].n].obs=document.getElementById("obs-text").value;}
+
+function addFotos(inp){
+  var n=ITEMS[cur].n;
+  Array.from(inp.files).forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(e){state[n].photos.push({name:f.name,data:e.target.result});renderThumbs();};
+    r.readAsDataURL(f);
+  });
+  inp.value="";
+}
+
+function renderThumbs(){
+  var b=document.getElementById("thumbs");
+  b.innerHTML="";
+  state[ITEMS[cur].n].photos.forEach(function(p){
+    var i=document.createElement("img");
+    i.src=p.data;i.className="thumb";b.appendChild(i);
+  });
+}
+
+function goBack(){
+  if(cur===0){goScreen("s0");}
+  else{cur--;renderItem();}
+}
+
+function nextItem(){
+  if(cur<ITEMS.length-1){cur++;renderItem();}
+  else{showResumen();}
+}
+
+function showResumen(){
+  var edif=document.getElementById("f-edif").value||"-";
+  document.getElementById("r-edif").textContent=edif;
+  var ok=0,fail=0,obs=0,pend=0;
+  ITEMS.forEach(function(it){
+    var s=state[it.n].status;
+    if(s==="ok")ok++;else if(s==="fail")fail++;else if(s==="obs")obs++;else pend++;
+  });
+  var st=document.getElementById("r-stats");
+  st.innerHTML="";
+  function mkS(cls,val,lbl){
+    var d=document.createElement("div");d.className="stat "+cls;
+    var n=document.createElement("div");n.className="stat-n";n.textContent=val;
+    var l=document.createElement("div");l.className="stat-l";l.textContent=lbl;
+    d.appendChild(n);d.appendChild(l);return d;
+  }
+  st.appendChild(mkS("ok",ok,"Conformes"));
+  st.appendChild(mkS("fail",fail,"No cumplen"));
+  st.appendChild(mkS("obs",obs,"Observacion"));
+  st.appendChild(mkS("pend",pend,"Sin evaluar"));
+  var hl=document.getElementById("r-hallazgos");
+  hl.innerHTML="";
+  var found=false;
+  ITEMS.forEach(function(it){
+    var s=state[it.n];
+    if(s.status==="fail"||s.status==="obs"){
+      found=true;
+      var card=document.createElement("div");card.className="hallazgo "+s.status;
+      var top=document.createElement("div");top.className="h-top";
+      var badge=document.createElement("span");badge.className="badge "+s.status;
+      badge.textContent=s.status==="fail"?"NO CUMPLE":"OBSERVACION";
+      var num=document.createElement("span");num.className="h-num";num.textContent="Item "+it.n;
+      top.appendChild(badge);top.appendChild(num);card.appendChild(top);
+      var desc=document.createElement("div");desc.className="h-desc";desc.textContent=it.d;card.appendChild(desc);
+      if(s.obs){var ob=document.createElement("div");ob.className="h-obs";ob.textContent=s.obs;card.appendChild(ob);}
+      if(s.photos.length){
+        var fr=document.createElement("div");fr.className="h-fotos";
+        s.photos.forEach(function(p){var img=document.createElement("img");img.src=p.data;img.className="h-thumb";fr.appendChild(img);});
+        card.appendChild(fr);
+      }
+      hl.appendChild(card);
+    }
+  });
+  if(!found){
+    var emp=document.createElement("div");
+    emp.style.cssText="text-align:center;padding:20px;color:#9ca3af;font-size:15px;";
+    emp.textContent="Sin hallazgos registrados";
+    hl.appendChild(emp);
+  }
+  goScreen("s2");
+}
+
+function generarPDF(){
+  var edif=document.getElementById("f-edif").value||"Sin especificar";
+  var admin=document.getElementById("f-admin").value||"--";
+  var jefe=document.getElementById("f-jefe").value||"--";
+  var fecha=document.getElementById("f-fecha").value||"--";
+  var hin=document.getElementById("f-hin").value||"--";
+  var hout=document.getElementById("f-hout")?document.getElementById("f-hout").value||"--":"--";
+  var obsgen=document.getElementById("r-obsgen").value||"";
+  var ok=0,fail=0,obs=0,pend=0;
+  ITEMS.forEach(function(it){var s=state[it.n].status;if(s==="ok")ok++;else if(s==="fail")fail++;else if(s==="obs")obs++;else pend++;});
+
+  // Full 35-item table
+  var infra="",gestion="";
+  ITEMS.forEach(function(it){
+    var s=state[it.n].status;
+    var icon="-",bg="#f9fafb",color="#9ca3af";
+    if(s==="ok"){icon="&#10003;";bg="#f0fdf4";color="#166534";}
+    else if(s==="fail"){icon="&#10007;";bg="#fff1f2";color="#991b1b";}
+    else if(s==="obs"){icon="!";bg="#fffbeb";color="#92400e";}
+    var obsText=state[it.n].obs||"";
+    var row="<tr style='background:"+bg+";'>";
+    row+="<td style='width:28px;text-align:center;font-weight:900;color:"+color+";font-size:14px;padding:6px 4px;border-bottom:1px solid #e5e7eb;'>"+icon+"</td>";
+    row+="<td style='width:22px;text-align:center;color:#9ca3af;font-size:10px;padding:6px 3px;border-bottom:1px solid #e5e7eb;'>"+it.n+"</td>";
+    row+="<td style='font-size:11px;color:#1a2744;padding:6px 7px;border-bottom:1px solid #e5e7eb;'>"+it.d+"</td>";
+    row+="<td style='font-size:10px;color:"+color+";padding:6px 7px;border-bottom:1px solid #e5e7eb;font-style:italic;'>"+obsText+"</td>";
+    row+="</tr>";
+    if(it.cat==="I") infra+=row; else gestion+=row;
+  });
+
+  // Hallazgos with photos
+  var hall="";
+  ITEMS.forEach(function(it){
+    var s=state[it.n];
+    if(s.status==="fail"||s.status==="obs"){
+      var bg=s.status==="fail"?"#fff1f2":"#fffbeb";
+      var bc=s.status==="fail"?"#991b1b":"#92400e";
+      var lbl=s.status==="fail"?"NO CUMPLE":"OBSERVACION";
+      var imgs="";
+      s.photos.forEach(function(p){imgs+="<img src='"+p.data+"' style='width:85px;height:85px;object-fit:cover;border-radius:6px;margin:3px;border:1px solid #e5e7eb;'/>";});
+      hall+="<div style='background:"+bg+";border-left:4px solid "+bc+";border-radius:0 8px 8px 0;padding:11px 13px;margin-bottom:10px;page-break-inside:avoid;'>";
+      hall+="<div style='display:flex;align-items:center;gap:8px;margin-bottom:5px;'>";
+      hall+="<span style='background:"+bc+";color:#fff;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;'>"+lbl+"</span>";
+      hall+="<span style='font-size:11px;color:#6b7280;'>Item "+it.n+"</span></div>";
+      hall+="<div style='font-size:12px;font-weight:700;color:#1a2744;margin-bottom:3px;'>"+it.d+"</div>";
+      if(s.obs) hall+="<div style='font-size:11px;color:#4b5563;line-height:1.5;'>"+s.obs+"</div>";
+      if(imgs) hall+="<div style='margin-top:7px;'>"+imgs+"</div>";
+      hall+="</div>";
+    }
+  });
+
+  var LOGO_DATA = "data:image/jpeg;base64,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";
+
+  var css="*{box-sizing:border-box;margin:0;padding:0;}";
+  css+="body{font-family:Arial,sans-serif;color:#111;font-size:12px;background:#fff;}";
+  css+="@page{margin:15mm 12mm;}";
+  css+="@media print{body{margin:0;}}";
+  css+=".page{max-width:794px;margin:0 auto;padding:20px;}";
+  css+=".gold-bar{height:3px;background:#B8933A;margin-bottom:18px;}";
+  css+=".sec{font-size:10px;font-weight:700;color:#B8933A;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid #B8933A;padding-bottom:3px;margin:18px 0 10px;}";
+  css+=".datos{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:4px;}";
+  css+=".dato{padding:8px 12px;border-bottom:1px solid #e5e7eb;}";
+  css+=".dato:nth-child(odd){background:#f9fafb;}";
+  css+=".dato-l{font-size:9px;font-weight:700;color:#B8933A;text-transform:uppercase;margin-bottom:2px;}";
+  css+=".dato-v{font-size:12px;font-weight:600;color:#1a2744;}";
+  css+=".stats{display:flex;gap:8px;margin-bottom:4px;}";
+  css+=".stat{flex:1;border-radius:8px;padding:10px 6px;text-align:center;border:1px solid #e5e7eb;}";
+  css+=".sn{font-size:24px;font-weight:800;line-height:1;}";
+  css+=".sl{font-size:8px;font-weight:700;text-transform:uppercase;margin-top:3px;}";
+  css+=".itbl{width:100%;border-collapse:collapse;}";
+  css+=".itbl th{background:#1a2744;color:#fff;padding:7px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:left;}";
+  css+=".itbl th:first-child,.itbl th:nth-child(2){text-align:center;width:28px;}";
+  css+=".cat-row td{background:#eef2f8;font-weight:700;color:#1a2744;font-size:10px;padding:5px 8px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid #B8933A;}";
+  css+=".firma-row{display:flex;gap:50px;margin-top:36px;}";
+  css+=".fbox{flex:1;border-top:1px solid #1a2744;padding-top:7px;text-align:center;}";
+  css+=".fn{font-size:11px;font-weight:700;color:#1a2744;}";
+  css+=".fc{font-size:9px;color:#6b7280;margin-top:2px;}";
+
+  var h="<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Acta NEXO - "+edif+"</title><style>"+css+"</style></head><body><div class='page'>";
+
+  // Header with logo
+  h+="<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:0;'>";
+  h+="<div style='background:#1a2744;color:#fff;padding:14px 18px;flex:1;border-radius:8px 0 0 0;'>";
+  h+="<div style='font-size:15px;font-weight:800;'>NEXO GESTION INMOBILIARIA</div>";
+  h+="<div style='font-size:9px;opacity:.65;margin-top:2px;'>Acta de Visita de Supervision - Jefe de Operaciones</div></div>";
+  h+="<div style='background:#fff;padding:8px 14px;border:1px solid #e5e7eb;border-left:none;border-radius:0 8px 0 0;display:flex;align-items:center;'>";
+  h+="<img src='"+LOGO_DATA+"' style='height:36px;display:block;'/></div></div>";
+  h+="<div class='gold-bar'></div>";
+
+  h+="<div class='sec'>Datos de la Visita</div>";
+  h+="<div class='datos'>";
+  h+="<div class='dato'><div class='dato-l'>Edificio</div><div class='dato-v'>"+edif+"</div></div>";
+  h+="<div class='dato'><div class='dato-l'>Fecha</div><div class='dato-v'>"+fecha+"</div></div>";
+  h+="<div class='dato'><div class='dato-l'>Jefe de Operaciones</div><div class='dato-v'>"+jefe+"</div></div>";
+  h+="<div class='dato'><div class='dato-l'>Hora ingreso</div><div class='dato-v'>"+hin+"</div></div>";
+  h+="<div class='dato'><div class='dato-l'>Administrador</div><div class='dato-v'>"+admin+"</div></div>";
+  h+="<div class='dato'><div class='dato-l'>Hora salida</div><div class='dato-v'>"+hout+"</div></div>";
+  h+="</div>";
+
+  h+="<div class='sec'>Resumen de Evaluacion</div>";
+  h+="<div class='stats'>";
+  h+="<div class='stat' style='background:#f0fdf4;border-color:#bbf7d0;'><div class='sn' style='color:#166534;'>"+ok+"</div><div class='sl' style='color:#166534;'>Conformes</div></div>";
+  h+="<div class='stat' style='background:#fff1f2;border-color:#fecaca;'><div class='sn' style='color:#991b1b;'>"+fail+"</div><div class='sl' style='color:#991b1b;'>No cumplen</div></div>";
+  h+="<div class='stat' style='background:#fffbeb;border-color:#fde68a;'><div class='sn' style='color:#92400e;'>"+obs+"</div><div class='sl' style='color:#92400e;'>Observacion</div></div>";
+  h+="<div class='stat' style='background:#f9fafb;'><div class='sn' style='color:#9ca3af;'>"+pend+"</div><div class='sl' style='color:#9ca3af;'>Sin evaluar</div></div>";
+  h+="</div>";
+
+  h+="<div class='sec'>Evaluacion Completa - 35 Items</div>";
+  h+="<table class='itbl'><thead><tr><th style='text-align:center;'>Est</th><th style='text-align:center;'>N</th><th>Descripcion</th><th>Observacion</th></tr></thead><tbody>";
+  h+="<tr class='cat-row'><td colspan='4'>Infraestructura y Areas Comunes</td></tr>";
+  h+=infra;
+  h+="<tr class='cat-row'><td colspan='4'>Gestion del Administrador</td></tr>";
+  h+=gestion;
+  h+="</tbody></table>";
+
+  if(hall){
+    h+="<div class='sec' style='margin-top:20px;'>Hallazgos y Observaciones Detalladas</div>";
+    h+=hall;
+  }
+
+  if(obsgen){
+    h+="<div class='sec'>Observaciones Generales</div>";
+    h+="<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:11px;font-size:12px;line-height:1.6;'>"+obsgen+"</div>";
+  }
+
+  h+="<div class='firma-row'>";
+  h+="<div class='fbox'><div class='fn'>"+jefe+"</div><div class='fc'>Jefe de Operaciones - NEXO</div></div>";
+  h+="<div class='fbox'><div class='fn'>"+admin+"</div><div class='fc'>Administrador del Edificio</div></div>";
+  h+="</div>";
+  h+="</div></body></html>";
+
+  var w=window.open("","_blank");
+  if(!w){alert("Permite ventanas emergentes para generar el acta");return;}
+  w.document.write(h);
+  w.document.close();
+  setTimeout(function(){w.print();},800);
+}
+
+
+
+var EJS_SERVICE="service_b1xah69";
+var EJS_TEMPLATE="template_87vsaqp";
+var EJS_KEY="lS1m0cvtsjHzoI9bS";
+
+function getJefeEmail(jefe){
+  var m={"Claudia Panta Taboada":"operaciones@nexo-peru.net","Maholy Garrido":"operaciones@nexo-peru.net","Junior Villavicencio":"operaciones@nexo-peru.net","Leonardo Aponte":"operaciones@nexo-peru.net","Jose Vizcardo":"operaciones@nexo-peru.net","Monica Degregori":"operaciones@nexo-peru.net"};
+  return m[jefe]||"operaciones@nexo-peru.net";
+}
+
+function enviarActa(){
+  var edif=document.getElementById("f-edif").value||"Sin especificar";
+  var admin=document.getElementById("f-admin").value||"Administrador";
+  var jefe=document.getElementById("f-jefe").value||"";
+  var fecha=document.getElementById("f-fecha").value||"";
+  var hin=document.getElementById("f-hin").value||"";
+  var hout=document.getElementById("f-hout")?document.getElementById("f-hout").value||"":"";
+  var emailAdmin=document.getElementById("f-email-admin")?document.getElementById("f-email-admin").value||"":"";
+  var obsgen=document.getElementById("r-obsgen").value||"";
+  if(!emailAdmin){alert("Por favor ingresa el correo del administrador.");return;}
+  var btn=document.getElementById("btn-enviar");
+  btn.textContent="Enviando...";btn.disabled=true;
+  emailjs.init(EJS_KEY);
+  var params={to_email:emailAdmin,cc_email:getJefeEmail(jefe),administrador:admin,edificio:edif,fecha:fecha,jefe:jefe,hora_ingreso:hin,hora_salida:hout,name:jefe,email:getJefeEmail(jefe),message:obsgen||"Sin observaciones adicionales."};
+  emailjs.send(EJS_SERVICE,EJS_TEMPLATE,params).then(
+    function(){
+      btn.textContent="Enviado";btn.disabled=false;
+      mostrarExito(edif,admin,emailAdmin);
+    },
+    function(err){
+      btn.textContent="FINALIZAR Y ENVIAR";btn.disabled=false;
+      alert("Error al enviar. Verifica tu conexion e intenta de nuevo.");
+    }
+  );
+}
+
+function mostrarExito(edif,admin,email){
+  var s=document.getElementById("s2");
+  var body=s.querySelector(".body");
+  body.innerHTML="";
+  var wrap=document.createElement("div");
+  wrap.style.cssText="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;min-height:70vh;";
+  wrap.innerHTML=
+    "<div style='width:72px;height:72px;border-radius:50%;background:#f0fdf4;border:3px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px;'>&#10003;</div>"+
+    "<div style='font-size:22px;font-weight:800;color:#1a2744;margin-bottom:8px;'>Acta enviada</div>"+
+    "<div style='font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:4px;'>Visita en <strong>"+edif+"</strong></div>"+
+    "<div style='font-size:13px;color:#6b7280;margin-bottom:4px;'>Administrador: <strong>"+admin+"</strong></div>"+
+    "<div style='font-size:12px;color:#9ca3af;margin-bottom:32px;'>"+email+"</div>"+
+    "<button onclick='nuevaVisita()' style='width:100%;max-width:300px;padding:17px;border-radius:14px;background:#1a2744;color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:inherit;'>+ Iniciar nueva visita</button>";
+  body.appendChild(wrap);
+}
+
+function nuevaVisita(){
+  ITEMS.forEach(function(it){state[it.n]={status:null,obs:"",photos:[]};});
+  cur=0;
+  document.getElementById("f-edif").value="";
+  document.getElementById("f-admin").value="";
+  var t=new Date();
+  var dd=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+  document.getElementById("f-fecha").value=dd;
+  document.getElementById("f-hin").value=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+  if(document.getElementById("f-hout")) document.getElementById("f-hout").value="";
+  if(document.getElementById("f-email-admin")) document.getElementById("f-email-admin").value="";
+  if(document.getElementById("r-obsgen")) document.getElementById("r-obsgen").value="";
+  goScreen("s0");
+}
+
+
+init();
+</script>
+</body>
+</html  ITEMS.forEach(function(it){
+    var s=state[it.n];
+    if(s.status==='fail'||s.status==='obs'){
+      found=true;
+      var div=document.createElement('div');
+      div.className='hallazgo '+s.status;
+      var top=document.createElement('div');top.className='h-top';
+      var badge=document.createElement('span');badge.className='badge '+s.status;
+      badge.textContent=s.status==='fail'?'NO CUMPLE':'OBSERVACION';
+      var num=document.createElement('span');num.className='h-num';num.textContent='Item '+it.n;
+      top.appendChild(badge);top.appendChild(num);
+      var desc=document.createElement('div');desc.className='h-desc';desc.textContent=it.d;
+      div.appendChild(top);div.appendChild(desc);
+      if(s.obs){var ob=document.createElement('div');ob.className='h-obs';ob.textContent=s.obs;div.appendChild(ob);}
+      if(s.photos.length){
+        var fr=document.createElement('div');fr.className='h-fotos';
+        s.photos.forEach(function(p){var img=document.createElement('img');img.src=p.data;img.className='h-thumb';fr.appendChild(img);});
+        div.appendChild(fr);
+      }
+      hl.appendChild(div);
+    }
+  });
+  if(!found)hl.innerHTML="<div style="text-align:center;padding:20px;color:#9ca3af;font-size:15px;">Sin hallazgos registrados</div>";
+  goScreen("s2");
+}
+
+function generarPDF(){
+  var edif=document.getElementById("f-edif").value||"Sin especificar";
+  var admin=document.getElementById("f-admin").value||"--";
+  var jefe=document.getElementById("f-jefe").value||"--";
+  var fecha=document.getElementById("f-fecha").value||"--";
+  var hin=document.getElementById("f-hin").value||"--";
+  var hout=document.getElementById("f-hout").value||"--";
+  var obsgen=document.getElementById("r-obsgen").value||"";
+  var ok=0,fail=0,obs=0,pend=0;
+  ITEMS.forEach(function(it){var s=state[it.n].status;if(s==="ok")ok++;else if(s==="fail")fail++;else if(s==="obs")obs++;else pend++;});
+  var hall="";
+  ITEMS.forEach(function(it){
+    var s=state[it.n];
+    if(s.status==="fail"||s.status==="obs"){
+      var bg=s.status==="fail"?"#fee2e2":"#fef3c7";
+      var tc=s.status==="fail"?"#991b1b":"#92400e";
+      var imgs=s.photos.map(function(p){return"<img src=""+p.data+"" style="width:65px;height:65px;object-fit:cover;border-radius:6px;margin:2px;"/>";}).join("");
+      hall+="<div style="border:1px solid #e5e7eb;border-radius:8px;padding:11px;margin-bottom:9px;">"+
+        "<span style="background:"+bg+";color:"+tc+";padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">"+(s.status==="fail"?"NO CUMPLE":"OBSERVACION")+"</span>"+
+        " <span style="font-size:11px;color:#9ca3af;">Item "+it.n+"</span>"+
+        "<div style="font-size:13px;font-weight:700;color:#1a2744;margin:5px 0 3px;">"+it.d+"</div>"+
+        (s.obs?"<div style="font-size:12px;color:#4b5563;">"+s.obs+"</div>":"")+
+        (imgs?"<div style="margin-top:5px;">"+imgs+"</div>":"")+
+        "</div>";
+    }
+  });
+  var w=window.open("","_blank","");
+  if(!w){alert("Permite ventanas emergentes para el PDF");return;}
+  w.document.write("<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Acta NEXO</title>"+
+    "<style>body{font-family:-apple-system,sans-serif;margin:24px;color:#111;font-size:13px;}"+
+    ".gold{height:3px;background:#B8933A;margin:12px 0 16px;}"+
+    "table{width:100%;border-collapse:collapse;margin-bottom:16px;}"+
+    "td{padding:6px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;}td:first-child{font-weight:700;color:#1a2744;background:#f9fafb;width:38%;}"+
+    ".stats{display:flex;gap:8px;margin-bottom:16px;}.stat{flex:1;border-radius:8px;padding:10px;text-align:center;}"+
+    ".sec{font-size:10px;font-weight:700;color:#B8933A;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #B8933A;padding-bottom:3px;margin:16px 0 10px;}"+
+    ".firma{margin-top:40px;display:flex;gap:40px;}.fbox{flex:1;border-top:1px solid #000;padding-top:6px;font-size:10px;text-align:center;color:#6b7280;}"+
+    "@media print{body{margin:0;}}</style></head><body>"+
+    "<div style="background:#1a2744;color:white;padding:16px 20px;margin:-24px -24px 0;">"+
+    "<div style="font-size:16px;font-weight:800;">NEXO GESTION INMOBILIARIA</div>"+
+    "<div style="font-size:10px;opacity:.6;margin-top:3px;">Acta de Visita de Supervision - Jefe de Operaciones</div></div>"+
+    "<div class="gold"></div>"+
+    "<div class="sec">DATOS DE LA VISITA</div>"+
+    "<table><tr><td>Edificio</td><td>"+edif+"</td></tr><tr><td>Jefe de Operaciones</td><td>"+jefe+"</td></tr>"+
+    "<tr><td>Administrador</td><td>"+admin+"</td></tr><tr><td>Fecha</td><td>"+fecha+"</td></tr>"+
+    "<tr><td>Hora ingreso</td><td>"+hin+"</td></tr><tr><td>Hora salida</td><td>"+hout+"</td></tr></table>"+
+    "<div class="sec">RESUMEN</div>"+
+    "<div class="stats">"+
+    "<div class="stat" style="background:#f0fdf4"><div style="font-size:24px;font-weight:800;color:#166534;">"+ok+"</div><div style="font-size:9px;color:#166534;font-weight:700;">CONFORMES</div></div>"+
+    "<div class="stat" style="background:#fff1f2"><div style="font-size:24px;font-weight:800;color:#991b1b;">"+fail+"</div><div style="font-size:9px;color:#991b1b;font-weight:700;">NO CUMPLEN</div></div>"+
+    "<div class="stat" style="background:#fffbeb"><div style="font-size:24px;font-weight:800;color:#92400e;">"+obs+"</div><div style="font-size:9px;color:#92400e;font-weight:700;">OBSERVACION</div></div>"+
+    "<div class="stat" style="background:#f9fafb"><div style="font-size:24px;font-weight:800;color:#9ca3af;">"+pend+"</div><div style="font-size:9px;color:#9ca3af;font-weight:700;">SIN EVALUAR</div></div>"+
+    "</div>"+
+    "<div class="sec">HALLAZGOS</div>"+(hall||"<p style="color:#9ca3af;">Sin hallazgos registrados.</p>")+
+    (obsgen?"<div class="sec">OBSERVACIONES GENERALES</div><p>"+obsgen+"</p>":"")+
+    "<div class="firma"><div class="fbox">"+jefe+"<br>Jefe de Operaciones</div>"+
+    "<div class="fbox">"+admin+"<br>Administrador</div></div>"+
+    "</body></html>");
+  w.document.close();
+  setTimeout(function(){w.print();},500);
+}
+
+function exportCSV(){
+  var edif=document.getElementById("f-edif").value||"Sin especificar";
+  var admin=document.getElementById("f-admin").value||"";
+  var jefe=document.getElementById("f-jefe").value||"";
+  var fecha=document.getElementById("f-fecha").value||"";
+  var hin=document.getElementById("f-hin").value||"";
+  var hout=document.getElementById("f-hout").value||"";
+  var obsgen=document.getElementById("r-obsgen").value||"";
+  function e(v){var s=String(v||'');return '"'+s.replace(/"/g,'""')+'"';}
+  var rows=[
+    [e("NEXO GESTION INMOBILIARIA")],
+    [e("TRACKER CHECK LIST DE VISITA")],[],
+    [e("Edificio:"),e(edif),"",e("Fecha:"),e(fecha)],
+    [e("Jefe:"),e(jefe),"",e("Ingreso:"),e(hin)],
+    [e("Administrador:"),e(admin),"",e("Salida:"),e(hout)],[],
+    [e("Item"),e("Categoria"),e("Descripcion"),e("Estado"),e("Observacion"),e("Fecha levantamiento"),e("Obs. administrador"),e("Estado levantamiento")]
+  ];
+  ITEMS.forEach(function(it){
+    var s=state[it.n];
+    var lbl=s.status==="ok"?"Conforme":s.status==="fail"?"No cumple":s.status==="obs"?"Observacion":"Sin evaluar";
+    rows.push([e(it.n),e(catFull(it.cat)),e(it.d),e(lbl),e(s.obs),e(""),e(""),e("")]);
+  });
+  rows.push([],[e("Observaciones:"),e(obsgen)]);
+  var csv=rows.map(function(r){return r.join(",");}).join("\n");
+  var blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="NEXO_Tracker_"+edif.replace(/ /g,"_")+"_"+fecha.replace(/-/g,"")+".csv";
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+init();
+</script>
+</body>
+</html>
